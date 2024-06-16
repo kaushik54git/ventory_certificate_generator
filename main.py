@@ -85,6 +85,7 @@ def index():
 @app.route('/generate_certificate', methods=['POST'])
 def generate_certificate():
     name = request.form.get('NAME')
+    email = request.form.get('EMAIL')
 
     if len(name) > 20:
         return jsonify({"error": "Name must be less than 20 characters"}), 400
@@ -110,15 +111,19 @@ def generate_certificate():
     doc_ref = db.collection('certificates').document(candidate_id)
     doc_ref.set({
         'name': name,
-        'certificate_url': certificate_url
+        'certificate_url': certificate_url,
+        'email': email
     })
 
     html_content = f'''
     <html>
-        <body>
-            <iframe src="{certificate_url}" width="100%" height="100%" frameborder="0">
-                This browser does not support PDFs. Please download the PDF to view it: <a href="{certificate_url}">Download PDF</a>
-            </iframe>
+        <body style="text-align: center;">
+            <br><BR>
+            <h1 > Congratulation </h1>
+            <br>
+            <p style="font-size: 20px;">Here is your <a href={certificate_url}>certificate </a> </p>
+            <P> click to download it </P>
+            
         </body>
     </html>
     '''
@@ -127,15 +132,25 @@ def generate_certificate():
 
     #return jsonify({"certificate_url": certificate_url}), 200
 
-@app.route('/certificate/<certificate_id>', methods=['GET'])
-def view_certificate(certificate_id):
+@app.route('/search', methods=['GET'])
+def search():
+    return render_template('search.html')
+
+@app.route('/search_certificate', methods=['GET'])
+def view_certificate():
+    name1 = request.args.get('NAME')
+    certificate_id = request.args.get('ID')
+    print(certificate_id)
     doc_ref = db.collection('certificates').document(certificate_id)
+    
     doc = doc_ref.get()
 
     if not doc.exists:
         return jsonify({"error": "Certificate not found"}), 404
 
     certificate_url = doc.to_dict().get('certificate_url')
+    certificate_name = doc.to_dict().get('name')
+    print(certificate_name)
 
     html_content = f'''
     <html>
